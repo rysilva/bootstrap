@@ -73,6 +73,13 @@ angular.module('ui.bootstrap.dropdown', ['ui.bootstrap.position'])
     }
 
     appendToBody = angular.isDefined($attrs.dropdownAppendToBody);
+
+    if ( appendToBody && self.dropdownMenu ) {
+      $document.find('body').append( self.dropdownMenu );
+      element.on('$destroy', function handleDestroyEvent() {
+        self.dropdownMenu.remove();
+      });
+    }
   };
 
   this.toggle = function( open ) {
@@ -96,15 +103,6 @@ angular.module('ui.bootstrap.dropdown', ['ui.bootstrap.position'])
 
   scope.$watch('isOpen', function( isOpen, wasOpen ) {
     if ( appendToBody && self.dropdownMenu ) {
-
-      if ( !self.menuAppendedToBody ) {
-        $document.find('body').append( self.dropdownMenu );
-        self.$element.on('$destroy', function handleDestroyEvent() {
-          self.dropdownMenu.remove();
-        });
-        self.menuAppendedToBody = true;
-      }
-
       var pos = $position.positionElements(self.$element, self.dropdownMenu, 'bottom-left', true);
       self.dropdownMenu.css({
         top: pos.top + 'px',

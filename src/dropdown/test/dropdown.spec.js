@@ -178,7 +178,7 @@ describe('dropdownToggle', function() {
     });
 
     it('adds the menu to the body', function() {
-      //expect($document.find('#dropdown-menu').parent()[0]).toBe($document.find('body')[0]);
+      expect($document.find('#dropdown-menu').parent()[0]).toBe($document.find('body')[0]);
     });
   });
 
