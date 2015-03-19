@@ -168,6 +168,20 @@ describe('dropdownToggle', function() {
     });
   });
 
+  describe('using dropdown-append-to-body', function() {
+    function dropdown() {
+      return $compile('<li dropdown dropdown-append-to-body><a href dropdown-toggle></a><ul class="dropdown-menu" id="dropdown-menu"><li><a href>Hello On Body</a></li></ul></li>')($rootScope);
+    }
+
+    beforeEach(function() {
+      element = dropdown();
+    });
+
+    it('adds the menu to the body', function() {
+      expect($document.find('#dropdown-menu').parent()[0]).toBe($document.find('body')[0]);
+    });
+  });
+
   describe('integration with $location URL rewriting', function() {
     function dropdown() {
 
