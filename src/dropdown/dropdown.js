@@ -58,7 +58,6 @@ angular.module('ui.bootstrap.dropdown', ['ui.bootstrap.position'])
       getIsOpen,
       setIsOpen = angular.noop,
       toggleInvoker = $attrs.onToggle ? $parse($attrs.onToggle) : angular.noop,
-      menu,
       appendToBody = false;
 
   this.init = function( element ) {
@@ -74,15 +73,6 @@ angular.module('ui.bootstrap.dropdown', ['ui.bootstrap.position'])
     }
 
     appendToBody = angular.isDefined($attrs.dropdownAppendToBody);
-
-    if ( appendToBody ) {
-      menu = element.find('.dropdown-menu');
-      $document.find('body').append( menu );
-
-      element.on('$destroy', function handleDestroyEvent() {
-        menu.remove();
-      });
-    }
   };
 
   this.toggle = function( open ) {
@@ -105,12 +95,22 @@ angular.module('ui.bootstrap.dropdown', ['ui.bootstrap.position'])
   };
 
   scope.$watch('isOpen', function( isOpen, wasOpen ) {
-    if ( appendToBody ) {
-      var pos = $position.positionElements(self.$element, menu, 'bottom-left', true);
-      pos.top += 'px';
-      pos.left += 'px';
-      menu.css(pos);
-      menu.toggle(isOpen);
+    if ( appendToBody && self.dropdownMenu ) {
+
+      if ( !self.menuAppendedToBody ) {
+        $document.find('body').append( self.dropdownMenu );
+        self.$element.on('$destroy', function handleDestroyEvent() {
+          self.dropdownMenu.remove();
+        });
+        self.menuAppendedToBody = true;
+      }
+
+      var pos = $position.positionElements(self.$element, self.dropdownMenu, 'bottom-left', true);
+      self.dropdownMenu.css({
+        top: pos.top + 'px',
+        left: pos.left + 'px',
+        display: isOpen ? 'block' : 'none'
+      });
     }
 
     $animate[isOpen ? 'addClass' : 'removeClass'](self.$element, openClass);
@@ -142,6 +142,19 @@ angular.module('ui.bootstrap.dropdown', ['ui.bootstrap.position'])
     controller: 'DropdownController',
     link: function(scope, element, attrs, dropdownCtrl) {
       dropdownCtrl.init( element );
+    }
+  };
+})
+
+.directive('dropdownMenu', function() {
+  return {
+    restrict: 'AC',
+    require: '?^dropdown',
+    link: function(scope, element, attrs, dropdownCtrl) {
+      if ( !dropdownCtrl ) {
+        return;
+      }
+      dropdownCtrl.dropdownMenu = element;
     }
   };
 })
