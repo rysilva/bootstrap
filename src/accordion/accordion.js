@@ -127,4 +127,6 @@ angular.module('ui.bootstrap.accordion', ['ui.bootstrap.collapse'])
       });
     }
   };
-});
+})
+
+;

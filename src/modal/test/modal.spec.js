@@ -8,14 +8,6 @@ describe('$modal', function () {
     element.trigger(e);
   };
 
-  var waitForBackdropAnimation = function () {
-    inject(function ($transition) {
-      if ($transition.transitionEndEventName) {
-        $timeout.flush();
-      }
-    });
-  };
-
   beforeEach(module('ui.bootstrap.modal'));
   beforeEach(module('template/modal/backdrop.html'));
   beforeEach(module('template/modal/window.html'));
@@ -106,16 +98,20 @@ describe('$modal', function () {
     return modal;
   }
 
-  function close(modal, result) {
+  function close(modal, result, noFlush) {
     var closed = modal.close(result);
-    $timeout.flush();
+    if (!noFlush) {
+      $timeout.flush();
+    }
     $rootScope.$digest();
     return closed;
   }
 
-  function dismiss(modal, reason) {
+  function dismiss(modal, reason, noFlush) {
     var closed = modal.dismiss(reason);
-    $timeout.flush();
+    if (!noFlush) {
+      $timeout.flush();
+    }
     $rootScope.$digest();
     return closed;
   }
@@ -134,7 +130,6 @@ describe('$modal', function () {
 
       expect($document).toHaveModalsOpen(0);
 
-      waitForBackdropAnimation();
       expect($document).not.toHaveBackdrop();
     });
 
@@ -150,7 +145,7 @@ describe('$modal', function () {
 
       expect($document).toHaveModalsOpen(0);
 
-      dismiss(modal, 'closing in test');
+      dismiss(modal, 'closing in test', true);
     });
 
     it('should not throw an exception on a second close', function () {
@@ -165,7 +160,7 @@ describe('$modal', function () {
 
       expect($document).toHaveModalsOpen(0);
 
-      close(modal, 'closing in test');
+      close(modal, 'closing in test', true);
     });
 
     it('should open a modal from templateUrl', function () {
@@ -181,7 +176,6 @@ describe('$modal', function () {
 
       expect($document).toHaveModalsOpen(0);
 
-      waitForBackdropAnimation();
       expect($document).not.toHaveBackdrop();
     });
 
@@ -237,9 +231,23 @@ describe('$modal', function () {
           ok: function() {return $q.reject('ko');}
         }}
       );
-      expect(modal.opened).toBeRejectedWith(false);
+      expect(modal.opened).toBeRejectedWith('ko');
     });
 
+    it('should focus on the element that has autofocus attribute when the modal is open/reopen', function () {
+      function openAndCloseModalWithAutofocusElement() {
+        var modal = open({template: '<div><input type="text" id="auto-focus-element" autofocus></div>'});
+
+        expect(angular.element('#auto-focus-element')).toHaveFocus();
+
+        close(modal, 'closed ok');
+
+        expect(modal.result).toBeResolvedWith('closed ok');
+      }
+
+      openAndCloseModalWithAutofocusElement();
+      openAndCloseModalWithAutofocusElement();
+    });
   });
 
   describe('default options can be changed in a provider', function () {
@@ -489,7 +497,6 @@ describe('$modal', function () {
         expect(backdropEl).toHaveClass('in');
 
         dismiss(modal);
-        waitForBackdropAnimation();
 
         modal = open({ template: '<div>With backdrop</div>' });
         backdropEl = $document.find('body > div.modal-backdrop');
@@ -541,7 +548,40 @@ describe('$modal', function () {
 
         expect($document.find('div.modal-dialog')).toHaveClass('modal-lg');
       });
+
+      it('should support custom size modal dialogs', function () {
+        open({
+          template: '<div>Large modal dialog</div>',
+          size: 'custom'
+        });
+
+        expect($document.find('div.modal-dialog')).toHaveClass('modal-custom');
+      });
     });
+
+    describe('animation', function () {
+
+      it('should have animation fade classes by default', function () {
+        open({
+          template: '<div>Small modal dialog</div>',
+        });
+
+        expect($document.find('.modal')).toHaveClass('fade');
+        expect($document.find('.modal-backdrop')).toHaveClass('fade');
+      });
+
+      it('should not have fade classes if animation false', function () {
+        open({
+          template: '<div>Small modal dialog</div>',
+          animation: false
+        });
+
+        expect($document.find('.modal')).not.toHaveClass('fade');
+        expect($document.find('.modal-backdrop')).not.toHaveClass('fade');
+      });
+
+    });
+
   });
 
   describe('multiple modals', function () {

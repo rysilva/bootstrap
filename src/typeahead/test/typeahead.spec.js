@@ -17,6 +17,13 @@ describe('typeahead tests', function () {
         }
       };
     });
+    $compileProvider.directive('childDirective', function () {
+      return {
+          restrict: 'A',
+          require: '^parentDirective',
+          link: function(scope, element, attrs, ctrl) {}
+      };
+    });
   }));
   beforeEach(inject(function (_$rootScope_, _$compile_, _$document_, _$timeout_, $sniffer) {
     $scope = _$rootScope_;
@@ -308,6 +315,19 @@ describe('typeahead tests', function () {
       expect(findMatches(element).eq(0).find('p').text()).toEqual('0 Alaska');
     }));
 
+    it('should support directives which require controllers in custom templates for matched items', inject(function ($templateCache) {
+
+      $templateCache.put('custom.html', '<p child-directive>{{ index }} {{ match.label }}</p>');
+
+      var element = prepareInputEl('<div><input ng-model="result" typeahead-template-url="custom.html" typeahead="state as state.name for state in states | filter:$viewValue"></div>');
+
+      element.data('$parentDirectiveController', {});
+
+      changeInputValueTo(element, 'Al');
+
+      expect(findMatches(element).eq(0).find('p').text()).toEqual('0 Alaska');
+    }));
+
     it('should throw error on invalid expression', function () {
       var prepareInvalidDir = function () {
         prepareInputEl('<div><input ng-model="result" typeahead="an invalid expression"></div>');
@@ -463,6 +483,15 @@ describe('typeahead tests', function () {
       expect(element).toBeClosed();
 
       deferred.reject('fail');
+      $scope.$digest();
+      expect(element).toBeClosed();
+    });
+
+    it('PR #3178, resolves #2999 - should not return property "length" of undefined for undefined matches', function () {
+      changeInputValueTo(element, 'c');
+      expect(element).toBeClosed();
+
+      deferred.resolve();
       $scope.$digest();
       expect(element).toBeClosed();
     });
@@ -630,6 +659,32 @@ describe('typeahead tests', function () {
       $(match).click();
       $scope.$digest();
     });
+
+    it('issue #3318 - should set model validity to true when set manually', function () {
+
+      var element = prepareInputEl(
+        '<div><form name="form">' +
+          '<input name="input" ng-model="result" typeahead="item for item in source | filter:$viewValue" typeahead-editable="false">' +
+        '</form></div>');
+
+      changeInputValueTo(element, 'not in matches');
+      $scope.$apply(function () {
+        $scope.result = 'manually set';
+      });
+
+      expect($scope.result).toEqual('manually set');
+      expect($scope.form.input.$valid).toBeTruthy();
+    });
+
+    it('issue #3166 - should set \'parse\' key as valid when selecting a perfect match and not editable', function () {
+      var element = prepareInputEl('<div ng-form="test"><input name="typeahead" ng-model="result" typeahead="state as state.name for state in states | filter:$viewValue" typeahead-editable="false"></div>');
+      var inputEl = findInput(element);
+
+      changeInputValueTo(element, 'Alaska');
+      triggerKeyDown(element, 13);
+
+      expect($scope.test.typeahead.$error.parse).toBeUndefined();
+    });
   });
 
   describe('input formatting', function () {
@@ -741,7 +796,7 @@ describe('typeahead tests', function () {
     };
     var element = prepareInputEl('<div><input ng-model="result" ng-keydown="keyDownEvent = $event" typeahead="item for item in source | filter:$viewValue" typeahead-on-select="onSelect($item, $model, $label)" typeahead-focus-first="false"></div>');
     changeInputValueTo(element, 'b');
-    
+
     // enter key should not be captured when nothing is focused
     triggerKeyDown(element, 13);
     expect($scope.keyDownEvent.isDefaultPrevented()).toBeFalsy();

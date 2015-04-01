@@ -9,12 +9,13 @@ The `$modal` service has only one method: `open(options)` where available option
 * `controller` - a controller for a modal instance - it can initialize scope used by modal. Accepts the "controller-as" syntax in the form 'SomeCtrl as myctrl'; can be injected with `$modalInstance`
 * `controllerAs` - an alternative to the controller-as syntax, matching the API of directive definitions. Requires the `controller` option to be provided as well
 * `resolve` - members that will be resolved and passed to the controller as locals; it is equivalent of the `resolve` property for AngularJS routes
+* `animation` - set to false to disable animations on new modal/backdrop. Does not toggle animations for modals/backdrops that are already displayed.
 * `backdrop` - controls presence of a backdrop. Allowed values: true (default), false (no backdrop), `'static'` - backdrop is present but modal window is not closed when clicking outside of the modal window.
 * `keyboard` - indicates whether the dialog should be closable by hitting the ESC key, defaults to true
 * `backdropClass` - additional CSS class(es) to be added to a modal backdrop template
 * `windowClass` - additional CSS class(es) to be added to a modal window template
 * `windowTemplateUrl` - a path to a template overriding modal's window template
-* `size` - optional size of modal window. Allowed values: `'sm'` (small) or  `'lg'` (large). Requires Bootstrap 3.1.0 or later
+* `size` - optional suffix of modal window class. The value used is appended to the `modal-` class, i.e. a value of `sm` gives `modal-sm`
 
 The `open` method returns a modal instance, an object with the following properties:
 
